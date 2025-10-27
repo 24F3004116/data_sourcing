@@ -1,0 +1,38 @@
+name: Daily Repository Sync
+
+on:
+  schedule:
+    # Runs at 08:30 UTC every day. You can change the time, but it must be specific.
+    - cron: '30 8 * * *'
+  workflow_dispatch: # Allows manual triggering
+
+jobs:
+  daily-commit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Grants permission to commit and push changes
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # This step fulfills the requirement to include your email in the name
+      - name: Preparing for commit by 24f3004116@ds.study.iitm.ac.in
+        run: |
+          # Creates or updates a file with the current UTC timestamp
+          echo "Last automated sync: $(date -uIs)" > sync-status.log
+
+      - name: Commit and push changes
+        run: |
+          # Configure Git user details
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          
+          # Stage the changed file
+          git add sync-status.log
+          
+          # Commit the change. '|| exit 0' ensures the workflow doesn't fail if no changes are detected (though we expect one)
+          git commit -m "Automated daily repository sync [skip ci]" || exit 0
+          
+          # Push the new commit to the main branch
+          git push
